@@ -7,12 +7,16 @@ const wallet = {
   ETH: 10,
 };
 
+const inOrders = {
+  USD: 0,
+  ETH: 0,
+};
+
 const orders = [];
 
 function scanMarket() {
   let counter = 0;
   setInterval(async () => {
-    console.log("tick");
     printBalance(counter);
     const marketOrders = await getMarketOrders();
     checkPlacedOrders(marketOrders);
@@ -27,13 +31,34 @@ function checkPlacedOrders(marketOrders) {
 }
 
 function placeNewOrders(marketOrders) {
-  // TODO: place 5 bids and 5 asks
+  const bestAsk = getBestAsk(marketOrders);
+  const bestBid = getBestBid(marketOrders);
+
+  for (let i = 0; i < 5; i++) {
+    placeBid(bestBid);
+    placeAsk(bestAsk);
+  }
+  console.log("ORDERS", orders);
+}
+
+function placeBid(bestBid) {
+  const remainingUSD = wallet.USD - inOrders.USD;
+  const price = calculateRandomPriceOffset(bestBid);
+  const amount = (Math.random() * remainingUSD) / price;
+  orders.push([1, price, amount]);
+  inOrders.USD += price * amount;
+}
+
+function placeAsk(bestAsk, remainingETH) {}
+
+function calculateRandomPriceOffset(price) {
+  return price + price * (0.1 * (0.5 - Math.random()));
 }
 
 function printBalance(counter) {
   // show balance every 30 seconds
   if (counter % 6 == 0) {
-    console.log(wallet);
+    print(wallet);
   }
 }
 
@@ -41,8 +66,14 @@ function getBestAsk() {
   // TODO: get best ASK from market orders
 }
 
-function getBestBid() {
-  // TODO: get best BID from market orders
+function getBestBid(marketOrders) {
+  return marketOrders
+    .filter((order) => {
+      return order[2] > 0;
+    })
+    .reduce((max, order) => {
+      return Math.max(max, order[1]);
+    }, 0);
 }
 
 async function getMarketOrders() {
@@ -52,8 +83,12 @@ async function getMarketOrders() {
     console.log(response.data);
     return response.data;
   } catch (e) {
-    console.log(e);
+    print(e);
   }
+}
+
+function print(text) {
+  console.log(text);
 }
 
 scanMarket();
