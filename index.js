@@ -12,7 +12,8 @@ const inOrders = {
   ETH: 0,
 };
 
-const orders = [];
+let bids = [];
+let asks = [];
 
 function scanMarket() {
   let counter = 0;
@@ -26,8 +27,34 @@ function scanMarket() {
   }, TIMEINTERVAL);
 }
 
+function printBalance(counter) {
+  if (counter % 6 == 0) {
+    print(wallet);
+  }
+}
+
 function checkPlacedOrders(marketOrders) {
-  // TODO: check user's placed orders to see which ones are filled
+  const bestAsk = getBestAsk(marketOrders);
+  const bestBid = getBestBid(marketOrders);
+
+  bids = bids.filter((bid) => {
+    return isBidFilled(bid, bestAsk);
+  });
+  console.log("");
+}
+
+function isBidFilled(bid, bestAsk) {
+  if (bid[1] > bestAsk) {
+    const price = bid[1];
+    const amount = bid[2];
+    console.log("BID FILLED@" + price);
+    inOrders.USD -= amount * price;
+    wallet.USD -= amount * price;
+    wallet.ETH += amount;
+    return false;
+  } else {
+    return true;
+  }
 }
 
 function placeNewOrders(marketOrders) {
@@ -36,44 +63,67 @@ function placeNewOrders(marketOrders) {
 
   for (let i = 0; i < 5; i++) {
     placeBid(bestBid);
-    placeAsk(bestAsk);
+    // placeAsk(bestAsk);
   }
-  console.log("ORDERS", orders);
+  //   console.log("bids", bids);
+  //   console.log("asks", asks);
 }
 
 function placeBid(bestBid) {
-  const remainingUSD = wallet.USD - inOrders.USD;
-  const price = calculateRandomPriceOffset(bestBid);
-  const amount = (Math.random() * remainingUSD) / price;
-  orders.push([1, price, amount]);
-  inOrders.USD += price * amount;
+  if (bids.length < 5) {
+    const remainingUSD = getAvailableUSD();
+    const price = calculateRandomPriceOffset(bestBid);
+    const amount = (Math.random() * remainingUSD) / price;
+
+    bids.push([1, price, amount]);
+    inOrders.USD += price * amount;
+  }
 }
 
-function placeAsk(bestAsk, remainingETH) {}
+function placeAsk(bestAsk) {
+  if (asks.length < 5) {
+    const remainingETH = getAvailableETH();
+    const price = calculateRandomPriceOffset(bestAsk);
+    //TODO: fix this
+    const amount = (Math.random() * remainingETH) / price;
+
+    asks.push([1, price, amount]);
+    inOrders.ETH += price * amount;
+  }
+}
 
 function calculateRandomPriceOffset(price) {
   return price + price * (0.1 * (0.5 - Math.random()));
 }
 
-function printBalance(counter) {
-  // show balance every 30 seconds
-  if (counter % 6 == 0) {
-    print(wallet);
-  }
+function getAvailableUSD() {
+  return wallet.USD - inOrders.USD;
 }
 
-function getBestAsk() {
-  // TODO: get best ASK from market orders
+function getAvailableETH() {
+  return wallet.ETH - inOrders.ETH;
+}
+
+function getBestAsk(marketOrders) {
+  const highestPrice = marketOrders[marketOrders.length - 1][1];
+  return marketOrders
+    .filter((order) => {
+      return order[2] < 0;
+    })
+    .reduce((min, order) => {
+      return Math.min(min, order[1]);
+    }, highestPrice);
 }
 
 function getBestBid(marketOrders) {
+  const highestPrice = marketOrders[marketOrders.length - 1][1];
   return marketOrders
     .filter((order) => {
       return order[2] > 0;
     })
-    .reduce((max, order) => {
-      return Math.max(max, order[1]);
-    }, 0);
+    .reduce((min, order) => {
+      return Math.min(min, order[1]);
+    }, highestPrice);
 }
 
 async function getMarketOrders() {
