@@ -29,7 +29,10 @@ function scanMarket() {
 
 function printBalance(counter) {
   if (counter % 6 == 0) {
-    print(wallet);
+    console.log("=============");
+    console.log("ETH:", wallet.ETH);
+    console.log("USD:", wallet.USD);
+    console.log("=============");
   }
 }
 
@@ -40,17 +43,38 @@ function checkPlacedOrders(marketOrders) {
   bids = bids.filter((bid) => {
     return isBidFilled(bid, bestAsk);
   });
-  console.log("");
+
+  asks = asks.filter((ask) => {
+    return isAskFilled(ask, bestBid);
+  });
 }
 
 function isBidFilled(bid, bestAsk) {
   if (bid[1] > bestAsk) {
     const price = bid[1];
     const amount = bid[2];
-    console.log("BID FILLED@" + price);
     inOrders.USD -= amount * price;
     wallet.USD -= amount * price;
     wallet.ETH += amount;
+
+    console.log("BID FILLED @", price, amount);
+
+    return false;
+  } else {
+    return true;
+  }
+}
+
+function isAskFilled(ask, bestBid) {
+  if (ask[1] < bestBid) {
+    const price = ask[1];
+    const amount = ask[2];
+    inOrders.ETH -= amount;
+    wallet.ETH -= amount;
+    wallet.USD += amount * price;
+
+    console.log("ASK FILLED @", price, amount);
+
     return false;
   } else {
     return true;
@@ -63,10 +87,8 @@ function placeNewOrders(marketOrders) {
 
   for (let i = 0; i < 5; i++) {
     placeBid(bestBid);
-    // placeAsk(bestAsk);
+    placeAsk(bestAsk);
   }
-  //   console.log("bids", bids);
-  //   console.log("asks", asks);
 }
 
 function placeBid(bestBid) {
@@ -77,6 +99,8 @@ function placeBid(bestBid) {
 
     bids.push([1, price, amount]);
     inOrders.USD += price * amount;
+
+    console.log("PLACE BID @", price, amount);
   }
 }
 
@@ -84,11 +108,12 @@ function placeAsk(bestAsk) {
   if (asks.length < 5) {
     const remainingETH = getAvailableETH();
     const price = calculateRandomPriceOffset(bestAsk);
-    //TODO: fix this
-    const amount = (Math.random() * remainingETH) / price;
 
+    const amount = Math.random() * remainingETH;
     asks.push([1, price, amount]);
-    inOrders.ETH += price * amount;
+    inOrders.ETH += amount;
+
+    console.log("PLACE ASK @", price, amount);
   }
 }
 
@@ -130,15 +155,11 @@ async function getMarketOrders() {
   const url = "https://api.deversifi.com/bfx/v2/book/tETHUSD/R0";
   try {
     const response = await axios.get(url);
-    console.log(response.data);
+    // console.log(response.data);
     return response.data;
   } catch (e) {
-    print(e);
+    console.error(e);
   }
-}
-
-function print(text) {
-  console.log(text);
 }
 
 scanMarket();
