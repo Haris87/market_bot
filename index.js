@@ -10,7 +10,6 @@ async function getOrderbook() {
   const url = "https://api.deversifi.com/bfx/v2/book/tETHUSD/R0";
   try {
     const response = await axios.get(url);
-    // console.log(response.data);
     return response.data;
   } catch (e) {
     console.error(e);
