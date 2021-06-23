@@ -38,9 +38,11 @@ function start() {
   let counter = 0;
   setInterval(async () => {
     const orderbook = await getOrderbook();
+    const bestAsk = bot.getBestAskPrice(orderbook);
+    const bestBid = bot.getBestBidPrice(orderbook);
     printBalance(counter);
-    bot.checkPlacedOrders(orderbook);
-    bot.placeNewOrders(orderbook);
+    bot.checkPlacedOrders(bestAsk, bestBid);
+    bot.placeNewOrders(bestAsk, bestBid);
 
     counter++;
   }, TIMEINTERVAL);

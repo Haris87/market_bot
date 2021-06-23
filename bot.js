@@ -15,10 +15,7 @@ let asks = [];
  * Check which bids and asks are filled
  * @param {*} orderbook
  */
-function checkPlacedOrders(orderbook) {
-  const bestAsk = getBestAskPrice(orderbook);
-  const bestBid = getBestBidPrice(orderbook);
-
+function checkPlacedOrders(bestAsk, bestBid) {
   bids = bids.filter((bid) => {
     return isBidFilled(bid, bestAsk);
   });
@@ -78,10 +75,7 @@ function isAskFilled(ask, bestBid) {
  * Places new bids and asks
  * @param {*} orderbook
  */
-function placeNewOrders(orderbook) {
-  const bestAsk = getBestAskPrice(orderbook);
-  const bestBid = getBestBidPrice(orderbook);
-
+function placeNewOrders(bestAsk, bestBid) {
   for (let i = 0; i < 5; i++) {
     placeBid(bestBid);
     placeAsk(bestAsk);
