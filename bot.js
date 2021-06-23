@@ -191,4 +191,7 @@ module.exports = {
   placeNewOrders,
   checkPlacedOrders,
   getFunds,
+  getBestAskPrice,
+  getBestBidPrice,
+  calculateRandomPriceOffset,
 };
